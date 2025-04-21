@@ -2,14 +2,18 @@
   "name": "secure-file-sharing",
   "version": "1.0.0",
   "main": "index.js",
+  "bin": {
+    "sfs": "./index.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Secure file sharing CLI",
   "dependencies": {
     "commander": "^13.1.0",
+    "fs-extra": "^11.3.0",
     "openpgp": "^6.1.0"
   }
 }
