@@ -17,13 +17,13 @@ async function encryptThenSign(options) {
     const encryptedMessage = uint8ToBase64(encryptedSessionKey) + encryptedFile;
 
     // Sign message with sender's private key
-    const privateKey = getSenderPrivateKey(sender);
+    const privateKey = await getSenderPrivateKey(sender);
     const signature = await signMessage(encryptedMessage, privateKey);
 
-    console.log("Ready to be sent.");
-    console.log("Encrypted session key: ", encryptedSessionKey);
-    console.log("Encrypted file: ", encryptedFile);
-    console.log("Signature: ", signature);
+    // console.log("Ready to be sent.");
+    // console.log("Encrypted session key: ", encryptedSessionKey);
+    // console.log("Encrypted file: ", encryptedFile);
+    // console.log("Signature: ", signature);
     return {encryptedSessionKey, encryptedFile, signature};
 }
 
@@ -97,7 +97,7 @@ async function getRecipientPublicKey(recipient){
     const publicKeyArmored = await fs.readFile(publicKeyPath, 'utf8');
     const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored });
     // console.log("Public key: ", publicKey);
-    console.log(`Successfully read public key for ${recipient}.`);
+    console.log(`Successfully read public key of ${recipient}.`);
     return publicKey;
 }
 
@@ -111,11 +111,11 @@ async function getSenderPrivateKey(sender){
     const privateKeyArmored = await fs.readFile(privateKeyPath, 'utf8');
     const encryptedPrivateKey = await openpgp.readPrivateKey({ armoredKey: privateKeyArmored });
     const privateKey = await openpgp.decryptKey({
-        encryptedPrivateKey,
+        privateKey: encryptedPrivateKey,
         passphrase: 'your-secure-passphrase' // ← required if the key is encrypted
     });
     // console.log("Private key: ", privateKey);
-    console.log(`Successfully read private key for ${sender}.`);
+    console.log(`Successfully read private key of ${sender}.`);
     return privateKey;
 }
 
