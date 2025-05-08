@@ -2,10 +2,6 @@ const fs = require('fs-extra');
 const path = require('path');
 const openpgp = require('openpgp');
 
-function uint8ToBase64(uint8Array) {
-    return Buffer.from(uint8Array).toString('base64');
-}
-
 async function encryptThenSign(options) {
     const { file, sender, recipient, output } = options;
     const publicKey = await getRecipientPublicKey(recipient);
@@ -14,23 +10,32 @@ async function encryptThenSign(options) {
     // Encrypt the file and session key
     const encryptedSessionKey = await encryptSessionKey(sessionKey, publicKey);
     const encryptedFile = await encryptFile(file, publicKey, output);
-    const encryptedMessage = uint8ToBase64(encryptedSessionKey) + encryptedFile;
+    const encryptedMessage = JSON.stringify({
+        encryptedSessionKey: encryptedSessionKey,
+        encryptedFile: encryptedFile,
+    });
+    console.log("Encrypted message: ", encryptedMessage);
 
     // Sign message with sender's private key
     const privateKey = await getSenderPrivateKey(sender);
-    const signature = await signMessage(encryptedMessage, privateKey);
+    const signedMessage = await signMessage(encryptedMessage, privateKey);
+
+    // Save the encrypted message and signature to a file
+    const signedMessageFile = `${file}.enc.sig`;
+    await fs.writeFile(signedMessageFile, signedMessage);
+    console.log(`Signature saved as ${signedMessageFile}`);
 
     // console.log("Ready to be sent.");
     // console.log("Encrypted session key: ", encryptedSessionKey);
     // console.log("Encrypted file: ", encryptedFile);
     // console.log("Signature: ", signature);
-    return {encryptedSessionKey, encryptedFile, signature};
+    return {signedMessage};
 }
 
 async function signMessage(encryptedMessage, privateKey) {
     const signedMessage = await openpgp.sign({
         message: await openpgp.createMessage({ text: encryptedMessage }),
-        signingKeys: privateKey,
+        signingKeys: [privateKey],
         format: 'armored',
     });
     console.log("Successfully sign message.");
@@ -73,6 +78,12 @@ async function encryptSessionKey(sessionKey, publicKey){
 
     // console.log(`Encrypted session key: ${encryptedSessionKey}`);
     console.log("Successfully encrypt session key.");
+
+    // Save the encrypted session key to a file
+    const sessionKeyFile = path.join(__dirname, `sessionKey.enc`);
+    await fs.writeFile(sessionKeyFile, encryptedSessionKey);
+    console.log(`Encrypted session key saved as ${sessionKeyFile}`);
+
     return encryptedSessionKey;
 }
 
@@ -121,10 +132,3 @@ async function getSenderPrivateKey(sender){
 
 
 module.exports = encryptThenSign;
-
-// async function main(){
-//     const publicKey = await getSenderPublicKey('alice');
-//     const sessionKey = await genSessionKey(publicKey);
-//     const encryptedSessionKey = await encryptSessionKey(sessionKey, publicKey);
-// }
-// main().catch(console.error);
