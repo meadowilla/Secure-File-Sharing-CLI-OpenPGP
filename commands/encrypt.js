@@ -14,7 +14,7 @@ async function encryptThenSign(options) {
         encryptedSessionKey: encryptedSessionKey,
         encryptedFile: encryptedFile,
     });
-    console.log("Encrypted message: ", encryptedMessage);
+    // console.log("Encrypted message: ", encryptedMessage);
 
     // Sign message with sender's private key
     const privateKey = await getSenderPrivateKey(sender);
@@ -23,7 +23,7 @@ async function encryptThenSign(options) {
     // Save the encrypted message and signature to a file
     const signedMessageFile = `${file}.enc.sig`;
     await fs.writeFile(signedMessageFile, signedMessage);
-    console.log(`Signature saved as ${signedMessageFile}`);
+    console.log(`${signedMessageFile} ready to be sent!`);
 
     return {signedMessage};
 }
@@ -39,7 +39,7 @@ async function signMessage(encryptedMessage, privateKey) {
 }
 
 async function encryptFile(file, sessionKey, output){
-    const outputFile = `${file}.enc` || output;
+    // const outputFile = `${file}.enc` || output;
 
     // Check if the file exists
     if (!fs.existsSync(file)) {
@@ -47,8 +47,8 @@ async function encryptFile(file, sessionKey, output){
         return;
     }
 
-    console.log(`Encrypting file: ${file}`);
-    console.log("Session key: ", sessionKey);
+    // console.log(`Encrypting file: ${file}`);
+    // console.log("Session key: ", sessionKey);
 
     // Encrypt the file using the recipient's public key
     const fileData = await fs.readFile(file);
@@ -59,12 +59,7 @@ async function encryptFile(file, sessionKey, output){
     });
     // console.log(`Encrypted data: ${encryptedData}`);
 
-    // Save the encrypted data to the output file
-    await fs.writeFile(outputFile, encryptedData);
-    console.log(`Encrypted file saved as ${outputFile}`);
-
     return encryptedData;
-
 }
 
 async function encryptSessionKey(sessionKey, publicKey){
@@ -79,9 +74,9 @@ async function encryptSessionKey(sessionKey, publicKey){
     console.log("Successfully encrypt session key.");
 
     // Save the encrypted session key to a file
-    const sessionKeyFile = path.join(__dirname, `sessionKey.enc`);
-    await fs.writeFile(sessionKeyFile, encryptedSessionKey);
-    console.log(`Encrypted session key saved as ${sessionKeyFile}`);
+    // const sessionKeyFile = path.join(__dirname, `sessionKey.enc`);
+    // await fs.writeFile(sessionKeyFile, encryptedSessionKey);
+    // console.log(`Encrypted session key saved as ${sessionKeyFile}`);
 
     return encryptedSessionKey;
 }
