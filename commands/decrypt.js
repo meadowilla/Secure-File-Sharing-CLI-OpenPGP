@@ -50,7 +50,7 @@ async function verifyMessage(signedMessage, publicKey) {
 async function decryptFile(encryptedFile, sessionKey){
     const decryptedMessage = await openpgp.decrypt({
         message: await openpgp.readMessage({ armoredMessage: encryptedFile }),
-        decryptionKeys: [sessionKey],
+        sessionKeys: sessionKey,
     });
     console.log("decryptedMessage: ", decryptedMessage);
 

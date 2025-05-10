@@ -9,7 +9,7 @@ async function encryptThenSign(options) {
 
     // Encrypt the file and session key
     const encryptedSessionKey = await encryptSessionKey(sessionKey, publicKey);
-    const encryptedFile = await encryptFile(file, publicKey, output);
+    const encryptedFile = await encryptFile(file, sessionKey, output);
     const encryptedMessage = JSON.stringify({
         encryptedSessionKey: encryptedSessionKey,
         encryptedFile: encryptedFile,
@@ -25,10 +25,6 @@ async function encryptThenSign(options) {
     await fs.writeFile(signedMessageFile, signedMessage);
     console.log(`Signature saved as ${signedMessageFile}`);
 
-    // console.log("Ready to be sent.");
-    // console.log("Encrypted session key: ", encryptedSessionKey);
-    // console.log("Encrypted file: ", encryptedFile);
-    // console.log("Signature: ", signature);
     return {signedMessage};
 }
 
@@ -42,7 +38,7 @@ async function signMessage(encryptedMessage, privateKey) {
     return signedMessage;
 }
 
-async function encryptFile(file, publicKey, output){
+async function encryptFile(file, sessionKey, output){
     const outputFile = `${file}.enc` || output;
 
     // Check if the file exists
@@ -51,11 +47,14 @@ async function encryptFile(file, publicKey, output){
         return;
     }
 
+    console.log(`Encrypting file: ${file}`);
+    console.log("Session key: ", sessionKey);
+
     // Encrypt the file using the recipient's public key
     const fileData = await fs.readFile(file);
     const encryptedData = await openpgp.encrypt({
         message: await openpgp.createMessage({ text: fileData.toString() }),
-        encryptionKeys: [publicKey],
+        sessionKey: sessionKey,
         format: 'armored',
     });
     // console.log(`Encrypted data: ${encryptedData}`);
@@ -88,14 +87,14 @@ async function encryptSessionKey(sessionKey, publicKey){
 }
 
 async function genSessionKey(publicKey){
-    const {data, algorithm} = await openpgp.generateSessionKey({
+    const sessionKey = await openpgp.generateSessionKey({
         encryptionKeys: [publicKey]
     })
 
     // console.log(`Session key: ${data}`);
     // console.log(`Algorithm: ${algorithm}`);
     console.log("Successfully generate session key.");
-    return {data};
+    return sessionKey;
 }
 
 async function getRecipientPublicKey(recipient){
