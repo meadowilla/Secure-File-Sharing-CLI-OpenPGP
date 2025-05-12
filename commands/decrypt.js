@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const openpgp = require('openpgp');
+const {confirm} = require('@inquirer/prompts');
 
 async function verifyThenDecrypt(options) {
     const { signedMessageFile, sender, recipient } = options;
@@ -11,21 +12,20 @@ async function verifyThenDecrypt(options) {
     const signedMessage = (await fs.readFile(signedMessageFile)).toString("utf8");
 
     // Verify the message
+    console.log(`> Verifying message...`);
     const verified = await verifyMessage(signedMessage, publicKey);
 
     // Parse the signedMessage to extract components
     const signedContent = verified.data;
     const {encryptedSessionKey, encryptedFile} = JSON.parse(signedContent);
-    // console.log("Encrypted session key: ", encryptedSessionKey);
-    // console.log("Encrypted file: ", encryptedFile);
 
     // Decrypt the session key
+    console.log(`> Decrypting session key...`);
     const sessionKey = await decryptSessionKey(encryptedSessionKey, privateKey);
-    // console.log("Session key: ", sessionKey);
 
     // Decrypt the file using the session key
+    console.log(`> Decrypting file...`);
     await decryptFile(encryptedFile, sessionKey);
-    console.log("Successfully decrypted the file.");
 }
 
 async function verifyMessage(signedMessage, publicKey) {
@@ -34,15 +34,13 @@ async function verifyMessage(signedMessage, publicKey) {
         verificationKeys: [publicKey]
     });
 
-    // console.log("verified: ", verified);
-
     // Check if the signature is valid
     const valid = await verified.signatures[0].verified;
     if (valid) {
-        console.log("Signature is valid.");
+        console.log("Signature is VALID!");
         return verified;
     } else {
-        console.error("Signature is invalid.");
+        console.error("> Signature is INVALID!");
         return;
     }
 }
@@ -52,13 +50,13 @@ async function decryptFile(encryptedFile, sessionKey){
         message: await openpgp.readMessage({ armoredMessage: encryptedFile }),
         sessionKeys: sessionKey,
     });
-    console.log("decryptedMessage: ", decryptedMessage);
+    console.log(decryptedMessage);
 
-    const decryptedData = decryptedMessage.data;
+    const decryptedData = Buffer.from(decryptedMessage.data, 'binary');
     // Save the decrypted data to a file or return it
     const outputFile = 'decrypted_file.txt'; // Change this to your desired output file name
     await fs.writeFile(outputFile, decryptedData);
-    console.log(`Decrypted file saved as ${outputFile}`);
+    console.log(`> Decrypted file is saved as ${outputFile}`);
 
 }
 
@@ -67,9 +65,6 @@ async function decryptSessionKey(encryptedSessionKey, privateKey){
         decryptionKeys: [privateKey],
         message: await openpgp.readMessage({ armoredMessage: encryptedSessionKey }),
     });
-
-    // console.log(`Encrypted session key: ${encryptedSessionKey}`);
-    console.log("Successfully decrypt session key.");
     return sessionKey;
 }
 
@@ -77,13 +72,30 @@ async function getSenderPublicKey(sender){
     const senderKeyDir = path.join(__dirname, '../keys', sender);
     const publicKeyPath = path.join(senderKeyDir, 'public.asc');
     if (!fs.existsSync(publicKeyPath)) {
-        console.error(`Public key for ${recipient} not found.`);
+        console.error(`Public key for ${sender} not found.`);
         return;
     }
     const publicKeyArmored = await fs.readFile(publicKeyPath, 'utf8');
     const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored });
-    // console.log("Public key: ", publicKey);
-    console.log(`Successfully read public key of ${sender}.`);
+
+    // Check the fingerprint of the sender's public key
+    const fingerprint = publicKey.getFingerprint().toUpperCase();
+    const formatted = fingerprint.match(/.{1,2}/g).join(':');
+    console.log(`> ${sender}’s OpenPGP fingerprint: ${formatted}`);
+
+    const answer = await confirm(
+        {
+            message: `> Confirm this is the trusted key for ${sender}?`,
+            default: false
+        }
+    );
+
+    if (!answer) {
+        console.log('❌ Aborted. Unverified key.');
+        process.exit(1);
+    }
+
+    console.log(`> Successfully read public key of ${sender}.`);
     return publicKey;
 }
 
@@ -100,8 +112,6 @@ async function getRecipientPrivateKey(recipient){
         privateKey: encryptedPrivateKey,
         passphrase: 'your-secure-passphrase' // ← required if the key is encrypted
     });
-    // console.log("Private key: ", privateKey);
-    console.log(`Successfully read private key of ${recipient}.`);
     return privateKey;
 }
 
