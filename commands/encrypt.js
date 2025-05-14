@@ -1,8 +1,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 const openpgp = require('openpgp');
-// const Mime = require('mime');
-// const mime = new Mime.Mime();
 const fileType = require('file-type');
 const {confirm} = require('@inquirer/prompts');
 
@@ -20,6 +18,7 @@ async function encryptThenSign(options) {
     console.log(`> Encrypting file...`);
     const encryptedFile = await encryptFile(file, sessionKey, output);
     const encryptedMessage = JSON.stringify({
+        sender: sender,
         encryptedSessionKey: encryptedSessionKey,
         encryptedFile: encryptedFile,
     });
@@ -57,7 +56,7 @@ async function encryptFile(file, sessionKey, output){
 
     // Encrypt the file using the recipient's public key
     const fileData = await fs.readFile(file);
-    const type = await fileType.fileTypeFromBuffer(fileData);
+    const type = await fileType.fromBuffer(fileData);
     const mimeType = type ? type.mime : 'application/octet-stream';
     const isBinary = mimeType && !mimeType.startsWith('text/');
     const message = isBinary

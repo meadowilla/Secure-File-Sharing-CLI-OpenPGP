@@ -2,6 +2,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const openpgp = require('openpgp');
 const {confirm} = require('@inquirer/prompts');
+const { exit } = require('process');
 
 async function verifyThenDecrypt(options) {
     const { signedMessageFile, sender, recipient } = options;
@@ -17,7 +18,13 @@ async function verifyThenDecrypt(options) {
 
     // Parse the signedMessage to extract components
     const signedContent = verified.data;
-    const {encryptedSessionKey, encryptedFile} = JSON.parse(signedContent);
+    const {trueSender, encryptedSessionKey, encryptedFile} = JSON.parse(signedContent);
+
+    // Check if the sender matches the true sender
+    if (trueSender !== sender) {
+        console.error(`> Sender mismatch! Expected: ${sender}, Found: ${trueSender}`);
+        return;
+    }
 
     // Decrypt the session key
     console.log(`> Decrypting session key...`);
@@ -29,19 +36,23 @@ async function verifyThenDecrypt(options) {
 }
 
 async function verifyMessage(signedMessage, publicKey) {
-    const verified = await openpgp.verify({
-        message: await openpgp.readMessage({ armoredMessage: signedMessage }),
-        verificationKeys: [publicKey]
-    });
-
-    // Check if the signature is valid
-    const valid = await verified.signatures[0].verified;
-    if (valid) {
-        console.log("Signature is VALID!");
-        return verified;
-    } else {
+    try {
+        const verified = await openpgp.verify({
+            message: await openpgp.readMessage({ armoredMessage: signedMessage }),
+            verificationKeys: [publicKey]
+        });
+        // Check if the signature is valid
+        const valid = await verified.signatures[0].verified;
+        if (valid) {
+            console.log("Signature is VALID!");
+            return verified;
+        } else {
+            console.error("Signature is INVALID!");
+            exit(1);
+        }
+    } catch (error) {
         console.error("> Signature is INVALID!");
-        return;
+        exit(1);
     }
 }
 

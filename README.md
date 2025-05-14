@@ -6,14 +6,20 @@
 
  ### Encrypt and sign file
  ``` 
- sfs encryptSign --file <file> --sender <sender> --receiver <receiver>
+ sfs encryptSign --file <file> --sender <sender> --recipient <recipient>
  ```
 
- ### Send encrypted file to receiver
+ ### Send encrypted file to recipient
  ``` 
- sfs send --ef <encryptedFile> --sender <sender> --receiver <receiver>
+ sfs send --ef <encryptedFile> --sender <sender> --recipient <recipient>
  ```
 
  ### Receive file
+ ```
+ sfs receive --recipient <recipient>
+ ```
 
- ### Decrypt file and verify signature 
+ ### Verify signature and decrypt file
+ ```
+ sfs verifyDecrypt --signedMessageFile <signedMessageFile> --recipient <recipient> --sender <sender>
+ ```

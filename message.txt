@@ -1,1 +1,1 @@
-Hello Bob, I'm Alice. 
+Hello Alice, I'm Bob. I have received your message.
