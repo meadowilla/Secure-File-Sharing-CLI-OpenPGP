@@ -21,7 +21,7 @@ async function sendFile(options) {
         },
         body: JSON.stringify(body),
     });
-    console.log(`> Response: ${response.status}`);
+    console.log("> Response:", response.status);
 }
 
 module.exports = sendFile;

@@ -18,7 +18,8 @@ async function verifyThenDecrypt(options) {
 
     // Parse the signedMessage to extract components
     const signedContent = verified.data;
-    const {trueSender, encryptedSessionKey, encryptedFile} = JSON.parse(signedContent);
+    const trueSender = JSON.parse(signedContent).sender;
+    const {encryptedSessionKey, encryptedFile} = JSON.parse(signedContent);
 
     // Check if the sender matches the true sender
     if (trueSender !== sender) {
