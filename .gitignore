@@ -3,3 +3,4 @@ keys/
 message.txt.enc
 .env
 receivedFiles/
+package-lock.json

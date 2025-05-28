@@ -19,7 +19,6 @@
     "express": "^5.1.0",
     "file-type": "^15.0.0",
     "fs-extra": "^11.3.0",
-    "mdns": "^2.7.2",
     "mongoose": "^8.14.2",
     "nodemon": "^3.1.10",
     "openpgp": "^6.1.0"
