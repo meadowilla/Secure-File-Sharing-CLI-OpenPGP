@@ -20,10 +20,7 @@ module.exports = app;
 
 try {
     const uri = process.env.MONGODB_MAILS_URI;
-    mongoose.connect(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    });
+    mongoose.connect(uri);
     console.log("Connected to MongoDB");
 } catch (error) {
     console.error("Cannot connect to MongoDB!", error);
